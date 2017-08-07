@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
 
 delta_t = 0.1
@@ -19,12 +20,13 @@ n = np.shape(Q)
 
 x_Hat=np.mat(np.zeros(sz))      # a posteri estimate of x
 # P=np.mat(np.zeros(n))         # a posteri error estimate
-P=[[2,0],[2,0]]         # a posteri error estimate
+P=[[2,0],[2,0]]                 # a posteri error estimate
 x_HatMinus=np.mat(np.zeros(sz)) # a priori estimate of x
-P_Minus=np.mat(np.zeros(n))    # a priori error estimate
-K=np.mat([[0],[0]])         # gain or blending factor
+P_Minus=np.mat(np.zeros(n))     # a priori error estimate
+K=np.mat([[0],[0]])             # gain or blending factor
 I = np.mat(np.eye(2))
 
+statistics = np.zeros(N)
 for k in range(9,N):
     # time update
     x_HatMinus[:,k] = A*x_Hat[:,k-1]+ B*g
@@ -34,7 +36,33 @@ for k in range(9,N):
     x_Hat[:,k] = x_HatMinus[:,k]+K*(Z[k]-H*x_HatMinus[:,k])
     P = (I-K*H)*P_Minus
 
-plt.plot(t,Z)
-plt.plot(t,x_Hat[0,:].T)
-plt.plot(t,x)
+    # data statistics
+    statistics[k] = x_Hat[0,k]-Z[k]
+
+plt.subplot(3,1,1)
+plt.plot(t,Z,'r--',label = 'Z')
+plt.plot(t,x,'-.', label = 'x')
+plt.plot(t,x_Hat[0,:].T, label = 'kf')
+plt.legend()
+
+plt.subplot(3,1,2)
+plt.plot(t,statistics, label = 'error')
+plt.legend()
+
+# the histogram of the data
+plt.subplot(3,1,3)
+n, bins, patches = plt.hist(statistics,30,normed=1,label='hist')
+
+# add a 'best fit' line
+mu = np.average(statistics)
+sigma = np.std(statistics)
+y = mlab.normpdf(bins, mu, sigma)
+plt.plot(bins, y, '--',label='best fit')
+plt.legend()
+print('mu:',mu,'sigma:',sigma)
+print('1 sigma:',mu-sigma,mu+sigma)
+print('2 sigma:',mu-sigma*2,mu+sigma*2)
+print('3 sigma:',mu-sigma*3,mu+sigma*3)
+
 plt.show()
+
